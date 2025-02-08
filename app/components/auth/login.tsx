@@ -69,7 +69,6 @@ const LoginForm = () => {
         id: data.user.id,
         name: data.user.name,
         session_id: data.user.session_id,
-        school_id: data.user.school_id,
         profile: data.user.profile
     }));
 

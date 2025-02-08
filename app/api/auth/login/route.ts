@@ -53,7 +53,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
          }
         }
         // Verify password
-        if (!user || (await hashPassword(password)) !== user.password) {
+        if (!user || (await hashPassword(password)) !== user.passkey) {
             return NextResponse.json({ message: "Invalid login credentials." }, { status: 400 });
         }
 
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         }
 
         // Insert login record
-        const content = `New login from ${user.email}, ${user.first_name}`;
+        const content = `New login from ${user.name}, ${user.contact}`;
         const created_at = new Date();
         const expires_at = addDays(created_at, 1);
 
@@ -80,10 +80,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             message: "Login successful!",
             user: {
                 id: user.id,
-                name: `${user.first_name} ${user.last_name}`,
+                name: user.name,
                 session_id: user.hashed_id,
-                profile: user.profile_picture,
-                school_id: user.school,
+                profile: user.logo,
             }
         }, { status: 200 });
 
