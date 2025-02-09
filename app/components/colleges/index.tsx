@@ -18,8 +18,13 @@ const Header = ({onAddCollegeClick}: CollegeHeaderProps) => {
       // Fetch Institutions
       useEffect(() => {
         const fetchInstitutions = async () => {
+          const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+          let id = "";
+          if(userSession && userSession.id){
+            id = userSession.id;
+          }
           try {
-            const response = await fetch(`/api/analytics/colleges`);
+            const response = await fetch(`/api/analytics/colleges?institution_id=${id}`);
             if (!response.ok) throw new Error("Failed to fetch Institutions");
             const data = await response.json();
             setAnalytics(data);
@@ -310,7 +315,12 @@ const CollegeList = ({onCollegeView}: CollegeListProps) => {
    useEffect(() => {
     const fetchColleges = async () => {
       try {
-        const response = await fetch(`/api/colleges?sort=${sort}&search=${search}&filter=${filter}`);
+        const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+        let id = "";
+        if(userSession && userSession.id){
+          id = userSession.id;
+        }
+        const response = await fetch(`/api/colleges?sort=${sort}&search=${search}&filter=${filter}&institution_id=${id}`);
         if (!response.ok) throw new Error("Failed to fetch Colleges");
         const data = await response.json();
         setColleges(data);

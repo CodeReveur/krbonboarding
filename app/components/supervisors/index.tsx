@@ -16,9 +16,15 @@ const Header = ({onAddSupervisorClick}: SupervisorHeaderProps) => {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
           // Fetch Institutions
           useEffect(() => {
+            const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+            let id = "";
+            if(userSession && userSession.id){
+              id = userSession.id;
+            }
             const fetchInstitutions = async () => {
               try {
-                const response = await fetch(`/api/analytics/supervisors`);
+          
+                const response = await fetch(`/api/analytics/supervisors?institution_id=${id}`);
                 if (!response.ok) throw new Error("Failed to fetch Institutions");
                 const data = await response.json();
                 setAnalytics(data);
@@ -299,9 +305,14 @@ const SupervisorList = () => {
   };
     // Fetch Supervisors
     useEffect(() => {
+      const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+      let id = "";
+      if(userSession && userSession.id){
+        id = userSession.id;
+      }
       const fetchSupervisors = async () => {
         try {
-          const response = await fetch(`/api/supervisors?sort=${sort}&search=${search}&filter=${filter}`);
+          const response = await fetch(`/api/supervisors?sort=${sort}&search=${search}&filter=${filter}&institution_id=${id}`);
           if (!response.ok) throw new Error("Failed to fetch Supervisors");
           const data = await response.json();
           setSupervisors(data);

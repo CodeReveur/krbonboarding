@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     const filter = searchParams.get("filter");
     const search = searchParams.get("search");
     const sort = searchParams.get("sort");
+    const session_id = searchParams.get("institution_id")
 
     let query = `SELECT 
       d.id,
@@ -27,10 +28,10 @@ export async function GET(req: Request) {
       JOIN schools s ON CAST(s.id AS TEXT) = d.school
       JOIN colleges c ON s.id = c.id
       JOIN institutions i ON c.id = i.id 
-      
+      WHERE i.id = $1
       `;
    
-    const params: any[] = [];
+    const params: any[] = [session_id];
 
     const conditions = [];
     if (filter) {
@@ -43,7 +44,7 @@ export async function GET(req: Request) {
     }
 
     if (conditions.length) {
-      query += ` WHERE ${conditions.join(" AND ")}`;
+      query += ` AND ${conditions.join(" AND ")}`;
     }
 
     // Sorting

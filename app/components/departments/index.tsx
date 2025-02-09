@@ -17,9 +17,14 @@ const Header = ({onAddDepartmentClick}: DepartmentHeaderProps) => {
     const [analytics, setAnalytics] = useState<Analytics | null>(null);
           // Fetch Institutions
           useEffect(() => {
+            const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+            let id = "";
+            if(userSession && userSession.id){
+              id = userSession.id;
+            }
             const fetchInstitutions = async () => {
               try {
-                const response = await fetch(`/api/analytics/departments`);
+                const response = await fetch(`/api/analytics/departments?institution_id=${id}`);
                 if (!response.ok) throw new Error("Failed to fetch Institutions");
                 const data = await response.json();
                 setAnalytics(data);
@@ -258,7 +263,12 @@ const DepartmentList = ({onDepartmentView}: DepartmentListProps) => {
     useEffect(() => {
       const fetchDepartments = async () => {
         try {
-          const response = await fetch(`/api/departments?sort=${sort}&search=${search}&filter=${filter}`);
+          const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+          let id = "";
+          if(userSession && userSession.id){
+            id = userSession.id;
+          }
+          const response = await fetch(`/api/departments?sort=${sort}&search=${search}&filter=${filter}&institution_id=${id}`);
           if (!response.ok) throw new Error("Failed to fetch Departments");
           const data = await response.json();
           setDepartments(data);

@@ -19,8 +19,13 @@ const Header = ({onAddSchoolClick}: SchoolHeaderProps) => {
         // Fetch Institutions
         useEffect(() => {
           const fetchInstitutions = async () => {
+            const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+            let id = "";
+            if(userSession && userSession.id){
+              id = userSession.id;
+            }
             try {
-              const response = await fetch(`/api/analytics/schools`);
+              const response = await fetch(`/api/analytics/schools?institution_id=${id}`);
               if (!response.ok) throw new Error("Failed to fetch Institutions");
               const data = await response.json();
               setAnalytics(data);
@@ -262,8 +267,13 @@ const SchoolList = ({onSchoolView}: SchoolListProps) => {
     // Fetch Schools
     useEffect(() => {
       const fetchSchools = async () => {
+        const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+        let id = "";
+        if(userSession && userSession.id){
+          id = userSession.id;
+        }
         try {
-          const response = await fetch(`/api/schools?sort=${sort}&search=${search}&filter=${filter}`);
+          const response = await fetch(`/api/schools?sort=${sort}&search=${search}&filter=${filter}&intitution_id=${id}`);
           if (!response.ok) throw new Error("Failed to fetch Schools");
           const data = await response.json();
           setSchools(data);

@@ -1,15 +1,17 @@
 export const dynamic = "force-dynamic";
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import client from "@/app/api/utils/db"; // Adjust the path as needed
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
     // Get the current month and last month
     const currentMonth = new Date().getMonth() + 1; // JavaScript months are 0-based
     const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1;
     const currentYear = new Date().getFullYear();
     const lastMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+    const session_id = searchParams.get("institution_id");
 
     // Query for total uploads across all time
     const queryTotalUploads = `SELECT COUNT(*) AS total_uploads FROM researches;`;
@@ -24,7 +26,7 @@ export async function GET() {
         SUM(CASE WHEN r.status = 'Published' OR r.status ='Approved' THEN 1 ELSE 0 END) AS total_published,
         SUM(r.downloads) AS total_downloads
       FROM researches r
-      WHERE EXTRACT(MONTH FROM CAST(r.created_at AS DATE)) = $1 AND EXTRACT(YEAR FROM CAST(r.created_at AS DATE)) = $2
+      WHERE r.institution = $1 AND EXTRACT(MONTH FROM CAST(r.created_at AS DATE)) = $2 AND EXTRACT(YEAR FROM CAST(r.created_at AS DATE)) = $3
     `;
 
     const lastMonthQuery = `
@@ -36,13 +38,13 @@ export async function GET() {
         SUM(CASE WHEN r.status = 'Published' OR r.status ='Approved' THEN 1 ELSE 0 END) AS total_published,
         SUM(r.downloads) AS total_downloads
       FROM researches r
-      WHERE EXTRACT(MONTH FROM CAST(r.created_at AS DATE)) = $1 AND EXTRACT(YEAR FROM CAST(r.created_at AS DATE)) = $2
+      WHERE r.institution = $1 AND EXTRACT(MONTH FROM CAST(r.created_at AS DATE)) = $2 AND EXTRACT(YEAR FROM CAST(r.created_at AS DATE)) = $3
     `;
 
     // Execute queries
     const totalUploadsData = await client.query(queryTotalUploads);
-    const currentResult = await client.query(query, [currentMonth, currentYear]);
-    const lastMonthResult = await client.query(lastMonthQuery, [lastMonth, lastMonthYear]);
+    const currentResult = await client.query(query, [session_id, currentMonth, currentYear]);
+    const lastMonthResult = await client.query(lastMonthQuery, [session_id, lastMonth, lastMonthYear]);
 
     const totalUploads = totalUploadsData.rows[0].total_uploads || 1;
     const current = currentResult.rows[0];
