@@ -104,26 +104,17 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       }
     };
   }, []);
-  // Fetch institutions
-  useEffect(() => {
-    const fetchInstitutions = async () => {
-      try {
-        const response = await fetch("/api/institution");
-        if (!response.ok) throw new Error("Failed to fetch institutions");
-        const data = await response.json();
-        setInstitutions(data);
-      } catch (error) {
-        setError("An error occurred while fetching institutions.");
-      }
-    };
-    fetchInstitutions();
-  }, []);
 
    // Fetch institutions
    useEffect(() => {
     const fetchSchools = async () => {
+      const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+      let id = "";
+      if(userSession && userSession.id){
+        id = userSession.id;
+      }
       try {
-        const response = await fetch("/api/schools");
+        const response = await fetch(`/api/schools?institution_id=${id}`);
         if (!response.ok) throw new Error("Failed to fetch Schools");
         const data = await response.json();
         setSchools(data);
@@ -287,36 +278,6 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </select>
             </div>
 
-          <div className="grid grid-cols-2 gap-4">
-
-           <div className="relative">
-              <label
-                htmlFor="institution"
-                className={`absolute left-3 text-gray-500 transition-all duration-300 ${
-                  focus["institution"]
-                    ? "top-[-10px] text-sm bg-white px-1"
-                    : "top-2 text-base"
-                }`}
-              >
-                Institution<span className="text-red-500"> *</span>
-              </label>
-              <select
-                id="institution"
-                className="w-full border rounded-md border-gray-300 px-3 py-2 bg-transparen2 focus:border-teal-500 focus:outline-none appearance-none transition-colors"
-                onFocus={() => handleFocus("institution")}
-                onBlur={(e) => handleBlur("institution", e.target.value)}
-                value={formData.institution}
-                onChange={handleChange}
-                required
-              >
-                 <option value=""></option>
-                {institutions.map((institute) => (
-                   <option key={institute.id} value={institute.id}>{institute.name}</option>
-                ))}
-              </select>
-            </div>
-
-
             <div className="relative">
               <label
                 htmlFor="status"
@@ -344,8 +305,6 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </select>
             </div>
 
-            
-          </div>
 
           {/* File input and file name display */}
           <div className="relative">

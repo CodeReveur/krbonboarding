@@ -38,8 +38,13 @@ const AddSupervisor: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   // Fetch schools
   useEffect(() => {
     const fetchschools = async () => {
+      const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+      let id = "";
+      if(userSession && userSession.id){
+        id = userSession.id;
+      }
       try {
-        const response = await fetch("/api/schools");
+        const response = await fetch(`/api/schools?institution_id=${id}`);
         if (!response.ok) throw new Error("Failed to fetch schools");
         const data = await response.json();
         setschools(data);

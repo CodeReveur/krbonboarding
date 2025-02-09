@@ -15,9 +15,9 @@ export async function GET(req: Request) {
         SUM(CASE WHEN s.status = 'Pending' THEN 1 ELSE 0 END) AS total_pending,
         SUM(CASE WHEN s.status ='Active' THEN 1 ELSE 0 END) AS total_active,
         SUM(CASE WHEN s.status = 'Blocked' OR s.status = 'Inactive' THEN 1 ELSE 0 END) AS total_inactive
-      FROM schools s 
-      JOIN colleges c ON CAST(c.id AS TEXT) = s.college
-      JOIN institutions i ON i.id = c.id 
+      FROM schools s
+      JOIN colleges c ON s.college = CAST(c.id AS TEXT)
+      JOIN institutions i ON c.id = CAST(c.institution AS INTEGER) 
       WHERE i.id = $1
     `;
 

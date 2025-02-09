@@ -16,31 +16,26 @@ interface Institution{
 const AddCollege: React.FC<{ onClose: () => void }> = ({ onClose }) => { 
 
   const [focus, setFocus] = useState<Record<string, boolean>>({});
+  const [institute, setInstitute] = useState("");
   const [formData, setFormData] = useState<FormData>({
     name: "",
     address: "",
     contact: "",
     logo: null,
-    institution: "",
+    institution: institute,
   });
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [institutions, setInstitutions] = useState<Institution[]>([]);
-
   // Initialize userId from localStorage
   useEffect(() => {
-    const fetchInstitutions = async () => {
-      try {
-        const response = await fetch("/api/institution");
-        if (!response.ok) throw new Error("Failed to fetch institutions");
-        const data = await response.json();
-        setInstitutions(data);
-      } catch (error) {
-        setError("An error occurred while fetching institutions.");
-      }
-    };
-    fetchInstitutions();
+        const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+        let id = "";
+        if(userSession && userSession.id){
+          id = userSession.id;
+          setInstitute(id);
+          setFormData((prev) => ({ ...prev, institution: id }));
+        }
   }, []);
 
   const handleFocus = (field: string) =>
@@ -175,33 +170,7 @@ const AddCollege: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               required
             />
           </div>
-          <div className="relative">
-              <label
-                htmlFor="institution"
-                className={`absolute left-3 text-gray-500 transition-all duration-300 ${
-                  focus["institution"]
-                    ? "top-[-10px] text-sm bg-white px-1"
-                    : "top-2 text-base"
-                }`}
-              >
-                Institution <span className="text-red-500"> *</span>
-              </label>
-              <select
-                id="institution"
-                className="w-full border rounded-md border-gray-300 px-3 py-2 bg-transparen2 focus:border-teal-500 focus:outline-none appearance-none transition-colors"
-                onFocus={() => handleFocus("institution")}
-                onBlur={(e) => handleBlur("institution", e.target.value)}
-                value={formData.institution}
-                name="institution"
-                onChange={handleChange}
-                required
-              >
-                <option value=""></option>
-                {institutions.map((institution,i) => (
-                   <option key={i} value={institution.id}>{institution.name}</option>
-                ))}
-              </select>
-            </div>
+          
 
           {/* Row 3: Profile Picture Upload */}
           <div className="relative mb-6">

@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     const session_id = searchParams.get("institution_id")
 
     let query = `SELECT 
-      s.id,
+     s.id,
       s.name,
       s.address,
       s.status,
@@ -26,8 +26,8 @@ export async function GET(req: Request) {
       i.name AS institute,
       c.name AS college
       FROM schools s
-      JOIN colleges c ON s.id = c.id
-      JOIN institutions i ON c.id = i.id 
+      JOIN colleges c ON s.college = CAST(c.id AS TEXT)
+      JOIN institutions i ON c.id = CAST(c.institution AS INTEGER) 
       WHERE i.id = $1
       `;
    

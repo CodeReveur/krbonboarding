@@ -17,9 +17,9 @@ export async function GET(req: Request) {
         SUM(CASE WHEN s.status = 'Blocked' OR s.status = 'Inactive' THEN 1 ELSE 0 END) AS total_inactive
       FROM students s
       JOIN departments d ON CAST(d.id AS TEXT) = s.department
-      JOIN schools sc ON  sc.id = d.id
-      JOIN colleges c ON c.id = sc.id
-      JOIN institutions i ON i.id = c.id 
+      JOIN schools sc ON CAST(sc.id AS TEXT) = d.school
+      JOIN colleges c ON CAST(c.id AS TEXT) = sc.college
+      JOIN institutions i ON CAST(i.id AS TEXT) = c.institution  
       WHERE i.id = $1
     `;
 

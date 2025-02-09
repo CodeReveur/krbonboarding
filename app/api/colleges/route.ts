@@ -24,7 +24,7 @@ export async function GET(req: Request) {
       c.logo,
       i.name AS institute
       FROM colleges c
-      JOIN institutions i ON c.id = i.id 
+      JOIN institutions i ON c.institution = CAST(i.id AS TEXT)  -- FIXED JOIN
       WHERE c.institution = $1
       `;
    

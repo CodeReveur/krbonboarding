@@ -45,8 +45,13 @@ const AddStudent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   // Fetch departments
   useEffect(() => {
     const fetchDepartments = async () => {
+      const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+      let id = "";
+      if(userSession && userSession.id){
+        id = userSession.id;
+      }
       try {
-        const response = await fetch("/api/departments");
+        const response = await fetch(`/api/departments?institution_id=${id}`);
         if (!response.ok) throw new Error("Failed to fetch departments");
         const data = await response.json();
         setDepartments(data);
