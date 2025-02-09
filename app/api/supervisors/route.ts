@@ -32,7 +32,7 @@ export async function GET(req: Request) {
       FROM supervisors s
       JOIN schools sc ON CAST(sc.id AS TEXT) = s.school
       JOIN colleges c ON CAST(sc.id AS TEXT) = sc.college
-      JOIN institutions i ON CAST(s.id AS TEXT) = c.institution 
+      JOIN institutions i ON CAST(i.id AS TEXT) = c.institution 
       WHERE i.id = $1
       `;
    
