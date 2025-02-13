@@ -1,1 +1,1 @@
-This app handles the dashboard for institution administrative  to monitor and manage the researches. It is going to be accessed as subdomain of kamero.rw as onboarding.kamero.rw Currently it is being accessible on https://krbonboard.vercel.app.
+This app handles the dashboard for institution administrative  to monitor and manage the researches. It is going to be accessed as subdomain of kamero.rw as onboarding.kamero.rw Currently it is being accessible on https://krbonboarding.vercel.app.
