@@ -16,7 +16,7 @@ const NavBar = ({ menuCollapsed, toggleMenu, onNavigate }: NavBarProps) => {
 
 
   useEffect(() => {
-    const session = JSON.parse(localStorage.getItem('institutionSession') || 'empty');
+    const session = JSON.parse(localStorage.getItem('institutionSession') || 'null');
     
     if (!session) {
        router.push("/auth/login");
