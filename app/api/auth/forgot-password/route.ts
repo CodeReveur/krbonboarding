@@ -28,7 +28,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     try {
         // Query user by email or phone
-        const sql = "SELECT hashed_id FROM institutions WHERE email = $1";
+        const sql = "SELECT hashed_id FROM institutions WHERE contact = $1";
         const result = await client.query(sql, [email]);
         const user = result.rows[0];
 
@@ -51,6 +51,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         }, { status: 200 });
 
     } catch (error) {
-        return NextResponse.json({ message: "Server error: " + (error instanceof Error ? "Connection failed" : "Unknown error occurred.") }, { status: 500 });
+        return NextResponse.json({ message: "Server error: " + (error instanceof Error ? "Connection failed"+error : "Unknown error occurred.") }, { status: 500 });
     }
 }

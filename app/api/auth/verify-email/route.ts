@@ -22,7 +22,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // Check if the code exists in the database
-    const checkQuery = `SELECT * FROM supervisors WHERE hashed_id = $1 AND verification_code = $2`;
+    const checkQuery = `SELECT * FROM institutions WHERE hashed_id = $1 AND verification_code = $2`;
     const checkResult = await client.query(checkQuery, [verifyData.hashed_id, verifyData.code]);
 
     if (checkResult.rowCount === 0) {

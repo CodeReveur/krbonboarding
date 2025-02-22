@@ -25,7 +25,7 @@ const NavBar = ({ menuCollapsed, toggleMenu, onNavigate }: NavBarProps) => {
   
 
   const menu = [
-    { name: "Dashboard", url: "/dashboard", icon: "bi bi-grid" },
+    { name: "Dashboard", url: "/", icon: "bi bi-grid" },
     { name: "Supervisors", url: "/w-page/supervisors", icon: "bi bi-box" },
     { name: "Students", url: "/w-page/students", icon: "bi bi-people" },
     { name: "Researches", url: "/w-page/researches", icon: "bi bi-search" },

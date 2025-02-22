@@ -22,16 +22,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // Check if the code exists in the database
-    const checkQuery = `SELECT verification_code, email, first_name FROM supervisors WHERE hashed_id = $1`;
+    const checkQuery = `SELECT verification_code, contact, name FROM institutions WHERE hashed_id = $1`;
     const checkResult = await client.query(checkQuery, [hashed_id]);
 
 
     if (checkResult.rowCount === 0) {
       return NextResponse.json({ error: "Error occured" }, { status: 400 });
     }
-    const email: string = checkResult.rows[0].email;
+    const email: string = checkResult.rows[0].contact;
     const code: string = checkResult.rows[0].verification_code;
-    const name: string = checkResult.rows[0].first_name;
+    const name: string = checkResult.rows[0].name;
 
     await sendVerificationEmail(email, code, name);
 
