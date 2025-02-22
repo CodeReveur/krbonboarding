@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import client from "../../utils/db";
-import { sendAccountVerificationSMS } from "../../utils/config";
+import { sendAccountCreationEmail, sendAccountVerificationSMS } from "../../utils/config";
 const cloudinary = require('../../utils/cloudinary');
 const fs = require('fs');
 const path = require('path');
@@ -99,8 +99,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       supervisorId,
     ]);
 
-    await sendAccountVerificationSMS(supervisorData.phone);
-    
+    await sendAccountCreationEmail (supervisorData.email, supervisorData.first_name)
     return NextResponse.json(
       { message: "supervisor added successfully", supervisor: { id: supervisorId, hashed_id: hashedsupervisorId, email: supervisorData.email } },
       { status: 201 }

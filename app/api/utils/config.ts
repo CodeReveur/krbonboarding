@@ -67,7 +67,7 @@ export async function sendChangePasswordVerificationEmail(email: string, code: s
     <div style="color: gray; font-size: 14px; margin: 10px 0;">
       Hello! <br/> Your request to change password has been proccessed, please verify your email
      </div><br />
-     <div style="background: silver; padding: 10px; font-size: 15px;">
+     <div style="background: silver; padding: 15px; font-size: 17px;">
       Verification code: <b>${code}</b>
      </div>
     <p style="margin: 10px 0; font-size: 14px; color: teal;">
@@ -110,9 +110,9 @@ export async function sendChangePasswordConfirmationEmail(email: string): Promis
   <html>
    <body>
      
-    <div style="font-size: 15px; margin: 10px 0; background: silver; padding: 15px;">
+    <div style="font-size: 15px; margin: 10px 0; padding: 15px;">
       Hi! <br />
-      Your password has been changed successfully! Please visit your dashboard to learn more <a href="https://dashboard.kamero.rw"> Dashboard </a>
+      Your password has been changed successfully! Please visit your dashboard to learn more <a href="https://onboarding.kamero.rw" style="color: teal"> dashboard </a>
     </div>
     <p style="margin: 10px 0; font-size: 14px; color: teal;">
      <br />
@@ -154,11 +154,67 @@ sendTransacSms.sender = 'Kamero Research Base';
 sendTransacSms.recipient = phone;
 sendTransacSms.content = 'Your account verification code is : ';
 sendTransacSms.type = 'transactional';
-sendTransacSms.webUrl = 'https://kamero.rw';
+sendTransacSms.webUrl = 'https://supervisor.kamero.rw';
 
 apiInstance.sendTransacSms(sendTransacSms).then(function(data: any) {
   console.log('API called successfully. Returned data: ' + JSON.stringify(data));
 }, function(error: any) {
   console.error(error);
 });
+}
+// Function to send institution approval email
+export async function sendAccountCreationEmail(email: string, name: string): Promise<void> {
+
+  let apiKey = apiInstance.authentications['apiKey'];
+  apiKey.apiKey = process.env.BREVO_API_KEY;
+  
+  let sendSmtpEmail = new brevo.SendSmtpEmail();
+  
+  sendSmtpEmail.subject = `Account Creation, Role and Permissions for ${name}`;
+  sendSmtpEmail.htmlContent = `
+  <html>
+   <body>
+     
+    <div style="font-size: 15px; margin: 10px 0; background: #14b8a6; color: white; border: 1px solid teal; border-radius: 9px; padding: 15px;">
+      Hello ${name}, <br />
+      Your account for has been created successfully at Kamero Research Base! <br>
+      <h4><u>Role and permissions</u></h4>
+      <ul>
+      <li> Research Supervision: <span style="color: green;"><b>Granted</b> </span></li>
+      <li> Adding research: <span style="color: green;"><b>Granted</b></span></li>
+      <li> Approve, reject, edit, hold researches: <span style="color: green;"><b>Granted</b></span></li>
+      <li> Deleting research: <span style="color: red;"><b>Denied</b></span></li>
+      <li> Adding department: <span style="color: green;"><b>Granted</b></span></li>
+      <li> Login: <span style="color: green;"><b>Granted</b></span></li>
+      <li> Deleting account: <span style="color: red;"><b>Denied</b></span></li>
+      </ul> 
+      Please visit your dashboard to learn more <a href="https://krbonboarding.vercel.app"> dashboard </a>
+      <br>
+      For more information reach your institution administration for assistance
+    </div>
+    <p style="margin: 10px 0; font-size: 14px; color: teal;">
+     <br />
+     Kamero Development Team
+     <br />
+     info@kamero.rw
+     <br />
+     +250781121117
+    </p>
+   </body>
+  </html>`;
+  sendSmtpEmail.sender = { "name": "Kamero Research Base", "email": "dev@kamero.rw" };
+  sendSmtpEmail.to = [
+    { "email": email, "name": "Supervisor" }
+  ];
+  sendSmtpEmail.replyTo = { "email": "dev@kamero.rw", "name": "Kamero" };
+  sendSmtpEmail.headers = { "Some-Custom-Name": "unique-id-1234" };
+  sendSmtpEmail.params = { "parameter": "My param value", "subject": "common subject" };
+  
+  
+  apiInstance.sendTransacEmail(sendSmtpEmail).then(function (data: any) {
+    console.log('API called successfully. ');
+  }, function (error: any) {
+    console.error(error);
+  });
+  
 }
