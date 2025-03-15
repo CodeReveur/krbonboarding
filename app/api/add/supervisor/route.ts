@@ -51,7 +51,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const status = "Pending";
 
     const result = await client.query(
-      `INSERT INTO supervisors (first_name, last_name, email, status, phone, school, department, profile_picture, dob, created_at, updated_at)
+      `INSERT INTO supervisors (first_name, last_name, email, status, phone, school, department, profile_picture, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW(), NOW()) RETURNING id`,
       [
         supervisorData.first_name,
@@ -59,7 +59,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         supervisorData.email,
         status,
         supervisorData.phone,
-        "null",
         supervisorData.department,
         "null"
       ]

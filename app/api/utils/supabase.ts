@@ -12,7 +12,7 @@ export default async function uploadDocumentToSupabase(file: File, title: string
     // Upload file to Supabase Storage
     const { data, error } = await supabase.storage
       .from("krb") // Replace with your Supabase bucket name
-      .upload(`institutions/students/${fileName}`, file, {
+      .upload(`institutions/data/${fileName}`, file, {
         cacheControl: "3600",
         upsert: false, // Prevent overwriting existing files
       });
@@ -24,7 +24,7 @@ export default async function uploadDocumentToSupabase(file: File, title: string
     // Get the public URL of the uploaded document
     const { data: publicUrl } = supabase.storage
       .from("krb")
-      .getPublicUrl(`institutions/students/${fileName}`);
+      .getPublicUrl(`institutions/data/${fileName}`);
 
     return publicUrl.publicUrl; // Return the file's direct URL
   } catch (error: any) {
