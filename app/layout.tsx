@@ -58,7 +58,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="en">
       <head>
         <title>{pageTitle}</title>
-        <link rel="shortcut icon" href="/logo.svg" type="image/x-icon" />
+        <link rel="icon" href="/logo.svg" sizes="32x32" type="image/svg+xml" />
       </head>
       
       {!hide && (

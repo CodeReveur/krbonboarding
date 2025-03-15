@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import client from "../../utils/db";
-import { sendAccountCreationEmail, sendAccountVerificationSMS } from "../../utils/config";
-const cloudinary = require('../../utils/cloudinary');
-const fs = require('fs');
-const path = require('path');
-const os = require('os'); // Import os to get the temporary directory
+import { sendAccountCreationEmail } from "../../utils/config";
 
 
 // Define types for the supervisor request
@@ -14,26 +10,8 @@ type supervisorRequest = {
   last_name: string;
   email: string;
   phone: string;
-  dob: string;
-  school: string;
-  profilePicture: File;
+  department: string;
 };
-
-// Helper to upload profile picture to Cloudinary
-async function uploadProfilePictureToCloudinary(file: File): Promise<string> {
-  const tempDir = os.tmpdir();
-  const profilePicturePath = path.join(tempDir, file.name);
-  const buffer = await file.arrayBuffer();
-  fs.writeFileSync(profilePicturePath, Buffer.from(buffer));
-
-  const uploadResult = await cloudinary.uploader.upload(profilePicturePath, {
-    use_filename: true,
-    folder: "supervisors/profile_pictures",
-  });
-
-  fs.unlinkSync(profilePicturePath);
-  return uploadResult.secure_url;
-}
 
 
 // Helper function to hash the supervisor ID
@@ -54,17 +32,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       last_name: formData.get("last_name")?.toString() || "",
       email: formData.get("email")?.toString() || "",
       phone: formData.get("phone")?.toString() || "",
-      dob: formData.get("dob")?.toString() || "",
-      school: formData.get("school")?.toString() || "",
-      profilePicture: formData.get("profilePicture") as File,
+      department: formData.get("department")?.toString() || "",
     };
 
     if (
       !supervisorData.first_name ||
       !supervisorData.last_name ||
       !supervisorData.email ||
-      !supervisorData.dob||
-      !supervisorData.school ||
+      !supervisorData.department||
       !supervisorData.phone
     ) {
       return NextResponse.json(
@@ -73,21 +48,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const profilePicture = await uploadProfilePictureToCloudinary(supervisorData.profilePicture);
     const status = "Pending";
 
     const result = await client.query(
-      `INSERT INTO supervisors (first_name, last_name, email, status, phone, school, dob, profile_picture, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8,  NOW(), NOW()) RETURNING id`,
+      `INSERT INTO supervisors (first_name, last_name, email, status, phone, school, department, profile_picture, dob, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW(), NOW()) RETURNING id`,
       [
         supervisorData.first_name,
         supervisorData.last_name,
         supervisorData.email,
         status,
         supervisorData.phone,
-        supervisorData.school,
-        supervisorData.dob,
-        profilePicture
+        "null",
+        supervisorData.department,
+        "null"
       ]
     );
 

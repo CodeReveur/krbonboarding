@@ -25,7 +25,7 @@ const Profile = ({ menuCollapsed, toggleMenu }: ProfileProps) => {
             KRB ONBOARDING
           </h4>
         </div>
-        <i className="bi bi-list text-xl cursor-pointer text-gray-500 hover:text-gray-300" onClick={toggleMenu}></i>
+        <i className={`bi bi-${menuCollapsed ? 'arrows-fullscreen' : 'arrows-angle-contract'} text-xl cursor-pointer text-gray-200 hover:text-gray-100`} onClick={toggleMenu}></i>
       </div>
     </>
   );

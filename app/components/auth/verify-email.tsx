@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import ChangePassword from "./change-password";
+import Preloader from "../app/buttonPreloader";
 
 
 interface FormData {
@@ -23,6 +24,8 @@ const VerifyEmail = ({hashed, email}: Props) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [timer, setTimer] = useState(false);
+   const [loading, setLoading] = useState(false);
+  
 
     let timeLeft = 120; // 2 minutes in seconds
   
@@ -64,6 +67,7 @@ const VerifyEmail = ({hashed, email}: Props) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true)
 
     const payload = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
@@ -83,16 +87,20 @@ const VerifyEmail = ({hashed, email}: Props) => {
         localStorage.setItem('userSession', JSON.stringify({
           session_id: hashed,
         }));
+        setLoading(false)
       } else {
         const error = await response.json();
         setError(error.message);
+        setLoading(false)
       }
     } catch (error) {
       setError(`Verification failed! ${(error as Error).message}`);
+      setLoading(false)
     }
   };
 
   const handleResendCode = async () => {
+    setLoading(true)
     try {
       const response = await fetch("/api/auth/resend-code", {
         method: "POST",
@@ -105,12 +113,15 @@ const VerifyEmail = ({hashed, email}: Props) => {
 
       if (response.ok) {
         setSuccess("Code sent successfully ✅");
+        setLoading(false)
       } else {
         const error = await response.json();
         setError(error.message);
+        setLoading(false)
       }
     } catch (error) {
       setError(`Verification failed! Try again ${(error as Error).message}`);
+      setLoading(false)
     }
   }
     if(success?.includes("verified") && hashed !== ""){
@@ -173,11 +184,15 @@ const VerifyEmail = ({hashed, email}: Props) => {
               <div className="text-slate-300 font-semibold" id="counter"></div>
             </div>
              {/* Submit Button */}
-            <div className="text-center">
+             <div className="text-center flex justify-center">
              <button
               type="submit"
-              className="w-[150px] border border-teal-400 text-teal-600 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
+              disabled={loading}
+              className="w-[150px] flex items-center justify-center space-x-2 border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
              >
+              {loading && (
+                <Preloader />
+              )}
               Verify
              </button>
             </div>

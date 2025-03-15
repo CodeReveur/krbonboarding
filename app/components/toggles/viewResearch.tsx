@@ -62,14 +62,15 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [research, setResearch] = useState<FormData | null>(null);
-
-
+  const [loading, setLoading] = useState(false);
+  
    const handleActive = (id: number) => {
     setActiveId(id);
    }
   // Fetch Researches
   useEffect(() => {
     const fetchResearch = async () => {
+      setLoading(true);
       try {
         const response = await fetch(`/api/research/view`, {
           method: "POST",
@@ -82,8 +83,10 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
         if (!response.ok) throw new Error("Failed to fetch researches");
         const data = await response.json();
         setResearch(data);
+        setLoading(false);
       } catch (error) {
         setError("An error occurred while fetching researches.");
+        setLoading(false);
       }
     };
     fetchResearch();
@@ -99,6 +102,7 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
   }, [research]); // ✅ Add research as a dependency to update when it changes
 
   const handleApprove = async (id: any) => {
+    setLoading(true);
     const response = await fetch(`/api/research/approve`, {
         method: 'PUT',
         headers: {
@@ -109,9 +113,11 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
     });
   
     if (!response.ok) {
+      setLoading(false);
         let errorData;
         try {
             errorData = await response.json();
+            setError(errorData.message)
         } catch (err) {
             setError("Failed to approve. Server returned an error without JSON.");
             return;
@@ -119,11 +125,15 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
         
         setError(errorData.message || "Failed to approve");
         return;
+    } else {
+      setLoading(false);
+      setSuccess("Request approved!")
     }
 
   };
 
   const handleReject = async (id: any) => {
+    setLoading(true);
     const response = await fetch(`/api/research/reject`, {
         method: 'PUT',
         headers: {
@@ -134,9 +144,11 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
     });
   
     if (!response.ok) {
+      setLoading(false);
         let errorData;
         try {
             errorData = await response.json();
+            setError(errorData.message)
         } catch (err) {
             setError("Failed to reject. Server returned an error without JSON.");
             return;
@@ -144,10 +156,14 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
         
         setError(errorData.message || "Failed to reject");
         return;
+    } else {
+      setLoading(false);
+      setSuccess("Request approved!")
     }
 
   };
   const handleHold = async (id: any) => {
+    setLoading(true);
     const response = await fetch(`/api/research/hold`, {
         method: 'PUT',
         headers: {
@@ -158,9 +174,11 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
     });
   
     if (!response.ok) {
+      setLoading(false);
         let errorData;
         try {
             errorData = await response.json();
+            setError(errorData.message)
         } catch (err) {
             setError("Failed to hold. Server returned an error without JSON.");
             return;
@@ -168,11 +186,15 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
         
         setError(errorData.message || "Failed to hold");
         return;
+    } else {
+      setLoading(false);
+      setSuccess("Request approved!")
     }
 
   };
 
   const handleReview = async (id: any) => {
+    setLoading(true);
     const response = await fetch(`/api/research/review`, {
         method: 'PUT',
         headers: {
@@ -183,9 +205,11 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
     });
   
     if (!response.ok) {
+      setLoading(false);
         let errorData;
         try {
             errorData = await response.json();
+            setError(errorData.message)
         } catch (err) {
             setError("Failed to reject. Server returned an error without JSON.");
             return;
@@ -193,6 +217,9 @@ const ViewResearch: React.FC<ViewResearchProps> = ({ResearchId, onClose }) => {
         
         setError(errorData.message || "Failed to reject");
         return;
+    } else {
+      setLoading(false);
+      setSuccess("Request approved!")
     }
 
   };

@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Preloader from "../app/buttonPreloader";
 
 interface FormData {
   name: string;
@@ -28,10 +29,11 @@ const AddSchool: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [colleges, setColleges] = useState<College[]>([])
-
+  const [loading, setLoading] = useState(false);
     // get all collegess
     useEffect(() => {
       const fetchColleges = async () => {
+        setLoading(true);
         const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
         let id = "";
         if(userSession && userSession.id){
@@ -42,8 +44,10 @@ const AddSchool: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           if (!response.ok) throw new Error("Failed to fetch institutions");
           const data = await response.json();
           setColleges(data);
+          setLoading(false);
         } catch (error) {
           setError("An error occurred while fetching institutions.");
+          setLoading(false);
         }
       };
       fetchColleges();
@@ -76,6 +80,7 @@ const AddSchool: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     const payload = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
@@ -99,12 +104,15 @@ const AddSchool: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           college: "",
         });
         setFile(null);
+        setLoading(false);
       } else {
         const error = await response.text();
         setError(`Submission failed. ${error}`);
+        setLoading(false);
       }
     } catch (error) {
       setError(`Submission failed. ${(error as Error).message}`);
+      setLoading(false);
     }
   };
 
@@ -242,11 +250,15 @@ const AddSchool: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </div>
            
              {/* Submit Button */}
-            <div className="text-center">
+             <div className="text-center flex justify-center">
              <button
               type="submit"
-              className="w-[150px] border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
+              disabled={loading}
+              className="w-[150px] flex items-center justify-center space-x-2 border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
              >
+              {loading && (
+                <Preloader />
+              )}
               Add
              </button>
             </div>

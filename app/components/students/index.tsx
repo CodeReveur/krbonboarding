@@ -58,8 +58,8 @@ const Header = ({onAddStudentClick}: StudentHeaderProps) => {
             </h4>
             <i className="bi bi-three-dots"></i>
           </div>
-          <div className="p-4 flex items-center">
-            <div className="text-3xl text-slate-600"> {analytics?.total_students} </div>
+          <div className="p-4 flex items-center justify-center">
+            <div className="text-center text-3xl text-slate-600"> {analytics?.total_students} </div>
             
           </div>
         </div>
@@ -72,8 +72,8 @@ const Header = ({onAddStudentClick}: StudentHeaderProps) => {
             </h4>
             <i className="bi bi-three-dots"></i>
           </div>
-          <div className="p-4 flex items-center">
-            <div className="text-3xl text-slate-600"> {analytics?.total_active} </div>
+          <div className="p-4 flex items-center justify-center">
+            <div className="text-center text-3xl text-slate-600"> {analytics?.total_active} </div>
             
           </div>
         </div>
@@ -85,8 +85,8 @@ const Header = ({onAddStudentClick}: StudentHeaderProps) => {
             </h4>
             <i className="bi bi-three-dots"></i>
           </div>
-          <div className="p-4 flex items-center">
-            <div className="text-3xl text-slate-600"> {analytics?.total_unverified} </div>
+          <div className="p-4 flex items-center justify-center">
+            <div className="text-center text-3xl text-slate-600"> {analytics?.total_unverified} </div>
             
           </div>
         </div>
@@ -99,8 +99,8 @@ const Header = ({onAddStudentClick}: StudentHeaderProps) => {
             </h4>
             <i className="bi bi-three-dots"></i>
           </div>
-          <div className="p-4 flex items-center">
-            <div className="text-3xl text-slate-600"> {analytics?.total_inactive} </div>
+          <div className="p-4 flex items-center justify-center">
+            <div className="text-center text-3xl text-slate-600"> {analytics?.total_inactive} </div>
             
           </div>
         </div>
@@ -113,8 +113,8 @@ const Header = ({onAddStudentClick}: StudentHeaderProps) => {
             </h4>
             <i className="bi bi-three-dots"></i>
           </div>
-          <div className="p-4 flex items-center">
-            <div className="text-3xl text-slate-600"> {analytics?.total_pending}</div>
+          <div className="p-4 flex items-center justify-center">
+            <div className="text-center text-3xl text-slate-600"> {analytics?.total_pending}</div>
           </div>
         </div>
 
@@ -140,6 +140,7 @@ interface Student{
   phone: string;
   password: string;
   institute: string;
+  department: string;
   status: string;
   created_at: string;
   profile_picture: string;
@@ -274,34 +275,7 @@ const StudentList = () => {
         )
     );
   };
-  const handleDelete = async (id: number) => {
-    const response = await fetch(`/api/students/delete`, {
-        method: 'DELETE',
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ id: id }),
-    });
   
-    if (!response.ok) {
-        let errorData;
-        try {
-            errorData = await response.json();
-        } catch (err) {
-            setError("Failed to delete Order: Server returned an error without JSON.");
-            return;
-        }
-        
-        setError(errorData.message || "Failed to delete Order");
-        return;
-    }
-  
-    // Update the Student list to remove the deleted Order
-    setStudents((prevStudents) => 
-        prevStudents.filter(Student => Student.id !== id)
-    );
-  };
     // Fetch Students
     useEffect(() => {
       const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
@@ -360,7 +334,7 @@ const StudentList = () => {
           <th className="py-2 px-2 font-normal">Status</th>
           <th className="py-2 px-2 font-normal">Name</th>
           <th className="py-2 px-2 font-normal">Email</th>
-          <th className="py-2 px-2 font-normal">Institution</th>
+          <th className="py-2 px-2 font-normal">Deparment</th>
           <th className="py-2 px-2 font-normal">Phone number</th>
           <th className="py-2 px-2 font-normal">Created at</th>
           <th className="py-2 px-2 font-normal">Actions</th>
@@ -376,7 +350,7 @@ const StudentList = () => {
             <td className="py-2 px-2"><span className={`${Student.status === 'Active' ? 'bg-green-100 text-green-600 border-green-300 ': Student.status === 'Pending' ? 'bg-yellow-100 text-yellow-600 border-yellow-300 ' : Student.status === 'Approved' ? 'bg-orange-100 text-orange-600 border-orange-300 ' : Student.status === 'Locked' ? 'bg-red-100 text-red-600 border-red-300 ' :'bg-slate-100 text-slate-600 border-slate-300 '} rounded px-1 border`}>{Student.status}</span></td>
             <td className="py-2 px-2">{Student.first_name+" "+Student.last_name}</td>
             <td className="py-2 px-2">{Student.email}</td>
-            <td className="py-2 px-2">{Student.institute}</td>
+            <td className="py-2 px-2">{Student.department}</td>
             <td className="py-2 px-2">{Student.phone}</td>
             <td className="py-2 px-2">{timeAgo(Student.created_at)}</td>
             <td className="py-2 px-6 text-center relative">
@@ -406,15 +380,7 @@ const StudentList = () => {
                     >
                       <i className="bi bi-check-circle-fill mr-2 text-orange-500 hover:bg-slate-100"></i> Lock
                     </li>
-                    <li
-                      className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center"
-                      onClick={() => {
-                        handleDelete(Student.id); // Delete the Order
-                        toggleDropdown(Student.id); // Close the dropdown
-                      }}
-                    >
-                      <i className="bi bi-trash mr-2 text-red-500 hover:bg-slate-100"></i> Delete
-                    </li>
+                   
                   </ul>
                 </div>
               )}

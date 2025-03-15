@@ -24,13 +24,16 @@ export async function GET(req: Request) {
       s.password,
       s.status,
       s.created_at,
+      s.department,
       s.hashed_id,
       s.profile_picture,
       i.name AS institute,
       c.name AS college,
-      sc.name AS school
+      sc.name AS school,
+      d.name AS department_name
       FROM supervisors s
-      JOIN schools sc ON CAST(sc.id AS TEXT) = s.school
+      JOIN departments d ON CAST(d.id AS TEXT) = s.department
+      JOIN schools sc ON CAST(sc.id AS TEXT) = d.school
       JOIN colleges c ON CAST(c.id AS TEXT) = sc.college
       JOIN institutions i ON CAST(i.id AS TEXT) = c.institution
       WHERE CAST(i.id AS TEXT) = $1
@@ -44,7 +47,7 @@ export async function GET(req: Request) {
       params.push(filter);
     }
     if (search) {
-      conditions.push(`(s.verification_code ILIKE $${params.length + 1} OR s.first_name ILIKE $${params.length + 1} OR s.last_name ILIKE $${params.length + 1} OR s.email ILIKE $${params.length + 1} OR s.status ILIKE $${params.length + 1})`);
+      conditions.push(`(s.verification_code ILIKE $${params.length + 1} OR d.name ILIKE $${params.length + 1}  OR s.first_name ILIKE $${params.length + 1} OR s.last_name ILIKE $${params.length + 1} OR s.email ILIKE $${params.length + 1} OR s.status ILIKE $${params.length + 1})`);
       params.push(`%${search}%`);
     }
 

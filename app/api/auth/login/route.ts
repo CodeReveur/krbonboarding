@@ -83,11 +83,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
                 name: user.name,
                 session_id: user.hashed_id,
                 profile: user.logo,
+                status: user.payment_status,
             }
         }, { status: 200 });
 
     } catch (error) {
         console.error("Login Error:", error);
-        return NextResponse.json({ message: "Server error: " + (error instanceof Error ? error.message : "Unknown error occurred.") }, { status: 500 });
+        return NextResponse.json({ message: "Server error: " + (error instanceof Error ? "connection failed" : "Unknown error occurred.") }, { status: 500 });
     }
 }

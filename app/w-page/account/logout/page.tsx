@@ -10,7 +10,7 @@ const Logout: React.FC = () => {
         const logoutUser = async () => {
             try {
                 // Retrieve the session from localStorage
-                const session = localStorage.getItem('institutiontudentSession');
+                const session = localStorage.getItem('institutionSession');
                 
                 if (!session) {
                     localStorage.removeItem('institutionSession');

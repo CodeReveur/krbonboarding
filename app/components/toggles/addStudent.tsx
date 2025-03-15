@@ -1,6 +1,8 @@
 
 "use client";
 import React, { useEffect, useState } from "react";
+import Preloader from "../app/buttonPreloader";
+import AlertNotification from "../app/notify";
 
 interface Departments {
   id: number;
@@ -14,7 +16,7 @@ interface FormData {
   last_name: string;
   email: string;
   phone: string;
-  department: string;
+  department: string | number;
   uniqueid: string;
 }
 
@@ -33,7 +35,45 @@ const AddStudent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+ 
+   
+   // Fetch departments
+   useEffect(() => {
+     const fetchDepartments = async () => {
+       setLoading(true);
+       const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+       let id = "";
+       if(userSession && userSession.id){
+         id = userSession.id;
+       }
+       try {
+         const response = await fetch(`/api/departments?institution_id=${id}`);
+         if (!response.ok) throw new Error("Failed to fetch.");
+         const data = await response.json();
+         setDepartments(data);
+         setLoading(false);
+       } catch (error) {
+         setLoading(false);
+         setError("An error occurred!.");
+       }
+     };
+     fetchDepartments();
+   }, []);
+ 
+        // Function to clear messages after a few seconds
+        useEffect(() => {
+          if (error || success) {
+            const timer = setTimeout(() => {
+              setError(null);
+              setSuccess(null);
+            }, 10000); // Hide after 4 seconds
+            return () => clearTimeout(timer);
+          }
+        }, [error, success]);
 
+        
   // Initialize userId from localStorage
   useEffect(() => {
     const session = JSON.parse(localStorage.getItem("userSession") || "null");
@@ -45,6 +85,7 @@ const AddStudent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   // Fetch departments
   useEffect(() => {
     const fetchDepartments = async () => {
+      setLoading(true);
       const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
       let id = "";
       if(userSession && userSession.id){
@@ -55,8 +96,10 @@ const AddStudent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         if (!response.ok) throw new Error("Failed to fetch departments");
         const data = await response.json();
         setDepartments(data);
+        setLoading(false);
       } catch (error) {
         setError("An error occurred while fetching departments.");
+        setLoading(false);
       }
     };
     fetchDepartments();
@@ -78,6 +121,7 @@ const AddStudent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     const payload = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
@@ -103,19 +147,25 @@ const AddStudent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           department: "",
           uniqueid: "",
         });
-        setFile(null);
+        setSearchTerm("");
+        setLoading(false);
       } else {
         const error = await response.text();
         setError(`Submission failed. ${error}`);
+        setLoading(false);
       }
     } catch (error) {
       setError(`Submission failed. ${(error as Error).message}`);
+      setLoading(false);
     }
   };
 
 
   return (
     <div className="fixed flex justify-center items-center bg-slate-400 w-full h-full top-0 left-0 z-30 backdrop-blur-sm bg-opacity-40">
+      {error && <AlertNotification message={error} type="error" />}
+      {success && <AlertNotification message={success} type="success" />}
+    
       <i
         onClick={onClose}
         className="bi bi-x absolute right-4 px-[6px] py-[2px] border top-7 text-2xl font-bold cursor-pointer text-teal-50 bg-teal-500 border-teal-300 hover:bg-teal-200 hover:border rounded-full"
@@ -124,13 +174,7 @@ const AddStudent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         <h4 className="text-center text-3xl my-3 pb-5 font-semibold text-teal-500">Add Student </h4>
         
         <form className="space-y-6 px-8" onSubmit={handleSubmit}>
-        {(success || error) && (
-          <div
-          className={`${success?.includes('success') ? 'bg-green-100 text-green-500 border-green-300 ' : ' bg-red-100 text-red-500 border-red-300 '} font-semibold p-4 rounded-md`}
-          >
-            {success ? success : error ? error : ""}
-          </div>
-        )}
+       
           {/* Row 1: First and Last Name */}
           <div className="grid grid-cols-2 gap-4">
             {[
@@ -236,39 +280,62 @@ const AddStudent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             </div>
           </div>
 
-          {/** department */}
-          <div className="relative">
-              <label
-                htmlFor="department"
-                className={`absolute left-3 text-gray-500 transition-all duration-300 ${
-                  focus["department"]
-                    ? "top-[-10px] text-sm bg-white px-1"
-                    : "top-2 text-base"
-                }`}
-              >
-                Department<span className="text-red-500"> *</span>
-              </label>
-              <select
-                id="department"
-                className="w-full border rounded-md border-gray-300 px-3 py-2 bg-transparen2 focus:border-teal-500 focus:outline-none appearance-none transition-colors"
-                onFocus={() => handleFocus("department")}
-                onBlur={(e) => handleBlur("department", e.target.value)}
-                value={formData.department}
-                onChange={handleChange}
-                required
-              >
-                 <option value=""></option>
-               {departments.map((department) =>(
-                <option key={department.id} value={department.id}>{department.name +" - " + department.school + " - " + department.institute}</option>
-               ))}
-              </select>
-            </div>
+          {/* Department */}
+<div className="relative">
+  <label
+    htmlFor="department"
+    className={`absolute left-3 text-gray-500 transition-all duration-300 ${
+      focus["department"] ? "top-[-10px] text-sm bg-white px-1" : "top-2 text-base"
+    }`}
+  >
+    Department <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    id="department"
+    className="w-full border rounded-md border-gray-300 px-3 py-2 bg-transparent focus:border-teal-500 focus:outline-none"
+    onFocus={() => handleFocus("department")}
+    onBlur={(e) => handleBlur("department", e.target.value)}
+    value={""+searchTerm} // Display department name
+    onChange={(e) => setSearchTerm(e.target.value)}
+    required
+  />
+  {searchTerm && (
+    <div className="absolute w-full bg-white border border-gray-300 rounded-md mt-1 shadow-lg z-10">
+      <ul>
+        {departments
+          .filter((department) =>
+            `${department.name} ${department.school} ${department.institute}`
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          )
+          .map((department) => (
+            <li
+              key={department.id}
+              className={`${searchTerm === department.name ? 'hidden' : ''} px-3 py-2 hover:bg-gray-200 cursor-pointer`}
+              onClick={() => {
+                setSearchTerm(department.name); // Show department name in input
+                setFormData({ ...formData, department: department.id }); // Store department ID in formData
+              }}
+            >
+              {department.name} - {department.school} - {department.institute}
+            </li>
+          ))}
+      </ul>
+    </div>
+  )}
+</div>
+         
              {/* Submit Button */}
-            <div className="text-center">
+             <div className="text-center flex justify-center">
              <button
               type="submit"
-              className="w-[150px] border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
+              disabled={loading}
+              className="w-[150px] flex items-center justify-center space-x-2 border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
              >
+              {loading && (
+                <Preloader />
+              )}
               Add
              </button>
             </div>

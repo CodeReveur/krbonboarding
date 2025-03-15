@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AlertNotification from "../app/notify";
 interface SupervisorHeaderProps{
   onAddSupervisorClick: () => void;
 }
@@ -59,7 +60,7 @@ const Header = ({onAddSupervisorClick}: SupervisorHeaderProps) => {
             </h4>
             <i className="bi bi-three-dots"></i>
           </div>
-          <div className="p-4 flex items-center">
+          <div className="p-4 flex items-center justify-center">
             <div className="text-3xl text-slate-600"> {analytics?.total_supervisors} </div>
             
           </div>
@@ -73,7 +74,7 @@ const Header = ({onAddSupervisorClick}: SupervisorHeaderProps) => {
             </h4>
             <i className="bi bi-three-dots"></i>
           </div>
-          <div className="p-4 flex items-center">
+          <div className="p-4 flex items-center justify-center">
             <div className="text-3xl text-slate-600"> {analytics?.total_active} </div>
             
           </div>
@@ -86,7 +87,7 @@ const Header = ({onAddSupervisorClick}: SupervisorHeaderProps) => {
             </h4>
             <i className="bi bi-three-dots"></i>
           </div>
-          <div className="p-4 flex items-center">
+          <div className="p-4 flex items-center justify-center">
             <div className="text-3xl text-slate-600"> {analytics?.total_unverified} </div>
             
           </div>
@@ -100,7 +101,7 @@ const Header = ({onAddSupervisorClick}: SupervisorHeaderProps) => {
             </h4>
             <i className="bi bi-three-dots"></i>
           </div>
-          <div className="p-4 flex items-center">
+          <div className="p-4 flex items-center justify-center">
             <div className="text-3xl text-slate-600"> {analytics?.total_inactive} </div>
             
           </div>
@@ -114,7 +115,7 @@ const Header = ({onAddSupervisorClick}: SupervisorHeaderProps) => {
             </h4>
             <i className="bi bi-three-dots"></i>
           </div>
-          <div className="p-4 flex items-center">
+          <div className="p-4 flex items-center justify-center">
             <div className="text-3xl text-slate-600"> {analytics?.total_pending}</div>
           </div>
         </div>
@@ -145,6 +146,7 @@ interface Supervisor{
   created_at: string;
   profile_picture: string;
   hashed_id: string;
+  department_name: string;
 }
 const timeAgo = (createdDate: string): string => {
   const now = new Date();
@@ -186,7 +188,17 @@ const SupervisorList = () => {
      const [Supervisors, setSupervisors] = useState<Supervisor[]>([]);
      const [error, setError] = useState<string | null>(null);
      const [success, setSuccess] = useState<string | null>(null);
-  
+         // Function to clear messages after a few seconds
+    useEffect(() => {
+      if (error || success) {
+        const timer = setTimeout(() => {
+          setError(null);
+          setSuccess(null);
+        }, 10000); // Hide after 4 seconds
+        return () => clearTimeout(timer);
+      }
+    }, [error, success]);
+
      const [sort, setSort] = useState("");
      const [search, setSearch] = useState("");
      const [filter, setFilter] =useState("");
@@ -241,7 +253,7 @@ const SupervisorList = () => {
     // Update the Supervisor list to set the approved status
     setSupervisors((prevSupervisors) => 
         prevSupervisors.map(Supervisor => 
-            Supervisor.id === id ? { ...Supervisor, status: 'Approved' } : Supervisor
+            Supervisor.id === id ? { ...Supervisor, status: 'Active' } : Supervisor
         )
     );
   };
@@ -275,34 +287,7 @@ const SupervisorList = () => {
         )
     );
   };
-  const handleDelete = async (id: number) => {
-    const response = await fetch(`/api/supervisors/delete`, {
-        method: 'DELETE',
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ id: id }),
-    });
-  
-    if (!response.ok) {
-        let errorData;
-        try {
-            errorData = await response.json();
-        } catch (err) {
-            setError("Failed to delete Order: Server returned an error without JSON.");
-            return;
-        }
-        
-        setError(errorData.message || "Failed to delete Order");
-        return;
-    }
-  
-    // Update the Supervisor list to remove the deleted Order
-    setSupervisors((prevSupervisors) => 
-        prevSupervisors.filter(Supervisor => Supervisor.id !== id)
-    );
-  };
+
     // Fetch Supervisors
     useEffect(() => {
       const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
@@ -316,7 +301,6 @@ const SupervisorList = () => {
           if (!response.ok) throw new Error("Failed to fetch Supervisors");
           const data = await response.json();
           setSupervisors(data);
-          console.log(data)
         } catch (error) {
           setError("An error occurred while fetching Supervisors.");
         }
@@ -326,6 +310,10 @@ const SupervisorList = () => {
 
     
   return (
+    <>
+    {error && <AlertNotification message={error} type="error" />}
+    {success && <AlertNotification message={success} type="success" />}
+    
     <div className="border rounded-lg p-4 bg-white">
 
       <h4 className="text-slate-500 text-lg">Supervisor list</h4>
@@ -361,7 +349,7 @@ const SupervisorList = () => {
           <th className="py-2 px-2 font-normal">Status</th>
           <th className="py-2 px-2 font-normal">Name</th>
           <th className="py-2 px-2 font-normal">Email</th>
-          <th className="py-2 px-2 font-normal">Institution</th>
+          <th className="py-2 px-2 font-normal">Department</th>
           <th className="py-2 px-2 font-normal">Phone number</th>
           <th className="py-2 px-2 font-normal">Created at</th>
           <th className="py-2 px-2 font-normal">Actions</th>
@@ -377,7 +365,7 @@ const SupervisorList = () => {
             <td className="py-2 px-2"><span className={`${Supervisor.status === 'Active' ? 'bg-green-100 text-green-600 border-green-300 ': Supervisor.status === 'Pending' ? 'bg-yellow-100 text-yellow-600 border-yellow-300 ' : Supervisor.status === 'Approved' ? 'bg-orange-100 text-orange-600 border-orange-300 ' : Supervisor.status === 'Locked' ? 'bg-red-100 text-red-600 border-red-300 ' :'bg-slate-100 text-slate-600 border-slate-300 '} rounded px-1 border`}>{Supervisor.status}</span></td>
             <td className="py-2 px-2">{Supervisor.first_name+" "+Supervisor.last_name}</td>
             <td className="py-2 px-2">{Supervisor.email}</td>
-            <td className="py-2 px-2">{Supervisor.institute}</td>
+            <td className="py-2 px-2">{Supervisor.department_name}</td>
             <td className="py-2 px-2">{Supervisor.phone}</td>
             <td className="py-2 px-2">{timeAgo(Supervisor.created_at)}</td>
             <td className="py-2 px-6 text-center relative">
@@ -396,7 +384,7 @@ const SupervisorList = () => {
                         toggleDropdown(Supervisor.id); // Close the dropdown
                       }}
                     >
-                      <i className="bi bi-check-circle-fill mr-2 text-orange-500 hover:bg-slate-100"></i> Approve
+                      <i className="bi bi-check-circle-fill mr-2 text-teal-500 hover:bg-slate-100"></i> Approve
                     </li>
                     <li
                       className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center"
@@ -405,17 +393,9 @@ const SupervisorList = () => {
                         toggleDropdown(Supervisor.id); // Close the dropdown
                       }}
                     >
-                      <i className="bi bi-check-circle-fill mr-2 text-orange-500 hover:bg-slate-100"></i> Lock
+                      <i className="bi bi-check-circle-fill mr-2 text-red-500 hover:bg-slate-100"></i> Lock
                     </li>
-                    <li
-                      className="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center"
-                      onClick={() => {
-                        handleDelete(Supervisor.id); // Delete the Order
-                        toggleDropdown(Supervisor.id); // Close the dropdown
-                      }}
-                    >
-                      <i className="bi bi-trash mr-2 text-red-500 hover:bg-slate-100"></i> Delete
-                    </li>
+                   
                   </ul>
                 </div>
               )}
@@ -434,6 +414,7 @@ const SupervisorList = () => {
         </>
       )} 
     </div>
+    </>
   );
 }
 export default Header;

@@ -27,7 +27,7 @@ const NavBar = ({ menuCollapsed, toggleMenu, onNavigate }: NavBarProps) => {
   const menu = [
     { name: "Dashboard", url: "/", icon: "bi bi-grid" },
     { name: "Supervisors", url: "/w-page/supervisors", icon: "bi bi-box" },
-    { name: "Students", url: "/w-page/students", icon: "bi bi-people" },
+    { name: "Students", url: "/w-page/students", icon: "bi bi-mortarboard" },
     { name: "Researches", url: "/w-page/researches", icon: "bi bi-search" },
     { name: "Colleges", url: "/w-page/colleges", icon: "bi bi-book" }, 
     { name: "Schools", url: "/w-page/schools", icon: "bi bi-building" },
@@ -38,9 +38,6 @@ const NavBar = ({ menuCollapsed, toggleMenu, onNavigate }: NavBarProps) => {
   const others = [
     { name: "Account", url: "/w-page/account", icon: "bi bi-person" },
     { name: "Analytics", url: "/w-page/analytics", icon: "bi bi-bar-chart-line" },
-    { name: "Logs", url: "/w-page/account/logs", icon: "bi bi-journal-text" },
-    { name: "Feedback", url: "/w-page/account/feedback", icon: "bi bi-chat" },
-    { name: "Help", url: "/w-page/account/help", icon: "bi bi-question-circle" },
     { name: "Log out", url: "/w-page/account/logout", icon: "bi bi-box-arrow-left" },
   ];
  
@@ -59,7 +56,7 @@ const NavBar = ({ menuCollapsed, toggleMenu, onNavigate }: NavBarProps) => {
                 pathname === tab.url ? 'bg-slate-300 text-gray-900' : ''
               }`}
             >
-              <i className={`${tab.icon} mr-2 text-xl transition-all duration-300 hover:text-sky-500`}></i>
+              <i className={`${tab.icon} ${menuCollapsed ? '':'mr-2'} text-xl transition-all duration-300 hover:text-sky-500`}></i>
               <span className={`${menuCollapsed ? 'hidden ' : 'block sm:block md:block lg:block'} transition-all duration-300 `}>
                 {tab.name}
               </span>
@@ -78,7 +75,7 @@ const NavBar = ({ menuCollapsed, toggleMenu, onNavigate }: NavBarProps) => {
                 pathname === tab.url ? 'bg-slate-300 text-gray-900' : ''
               }`}
             >
-              <i className={`${tab.icon} mr-2 text-xl transition-all duration-300 hover:text-sky-500`}></i>
+              <i className={`${tab.icon}  ${menuCollapsed ? '':'mr-2'}  text-xl transition-all duration-300 hover:text-sky-500`}></i>
               <span className={`${menuCollapsed ? 'hidden ' : 'block sm:block md:block lg:block'} transition-all duration-300 `}>
                 {tab.name}
               </span>

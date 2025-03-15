@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import "quill/dist/quill.snow.css";
-import DivPreloader, { ButtonPreloader } from "../app/preloader";
+import Preloader from "../app/buttonPreloader";
+import AlertNotification from "../app/notify";
 
 const researchTopics = [
   "Pest surveillance and management",
@@ -38,14 +39,11 @@ const researchTopics = [
   "Legal system effectiveness"
 ];
 
-interface School {
+interface Departments {
   id: number;
   name: string;
-};
-
-interface Institution {
-  id: number;
-  name: string;
+  institute: string;
+  school: string;
 }
 
 interface FormData {
@@ -53,7 +51,7 @@ interface FormData {
   researcher: string;
   category: string;
   status: string;
-  school: string;
+  department: string | number;
   year: string;
   abstract: string;
 }
@@ -66,17 +64,53 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     researcher: "",
     category: "",
     status: "",
-    school: "",
+    department: "",
     year: "",
     abstract: "",
   });
-  const [schools, setSchools] = useState<School[]>([]);
+    const [departments, setDepartments] = useState<Departments[]>([]);
   const [institution, setInstitution] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
+  
+  // Fetch departments
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      setLoading(true);
+      const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
+      let id = "";
+      if(userSession && userSession.id){
+        id = userSession.id;
+      }
+      try {
+        const response = await fetch(`/api/departments?institution_id=${id}`);
+        if (!response.ok) throw new Error("Failed to fetch.");
+        const data = await response.json();
+        setDepartments(data);
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        setError("An error occurred!.");
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+     // Function to clear messages after a few seconds
+     useEffect(() => {
+      if (error || success) {
+        const timer = setTimeout(() => {
+          setError(null);
+          setSuccess(null);
+        }, 10000); // Hide after 4 seconds
+        return () => clearTimeout(timer);
+      }
+    }, [error, success]);
 
   useEffect(() => {
     let quillInstance: any = null;
@@ -106,29 +140,6 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     };
   }, []);
 
-   // Fetch institutions
-   useEffect(() => {
-   setLoading(true)
-    const fetchSchools = async () => {
-      const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
-      let id = "";
-      if(userSession && userSession.id){
-        id = userSession.id;
-      }
-      setInstitution(id);
-      try {
-        const response = await fetch(`/api/schools?institution_id=${id}`);
-        if (!response.ok) throw new Error("Failed to fetch Schools");
-        const data = await response.json();
-        setSchools(data);
-        setLoading(false);
-      } catch (error) {
-        setError("An error occurred while fetching Schools.");
-        setLoading(false);
-      }
-    };
-    fetchSchools();
-  }, []);
 
 
 
@@ -147,6 +158,7 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     setSubmitting(true);
+    setLoading(true)
     e.preventDefault();
 
     const payload = new FormData();
@@ -169,55 +181,52 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       });
 
       if (response.ok) {
-        setSuccess(true);
+        setSuccess("Research added successfully");
         setFormData({
           title: "",
           researcher: "",
           category: "",
           status: "",
-          school: "",
+          department: "",
           year: "",
           abstract: "",
         });
+        setSearchTerm("");
         setFile(null);
         setSubmitting(false);
+        setLoading(false)
         setTimeout(() => {onClose();}, 2000) 
       } else {
-        const error = await response.text();
-        setError(`Submission failed. ${error}`);
+        const error = await response.json();
+        setError(`${error.error}`);
         setSubmitting(false)
+        setLoading(false)
       }
     } catch (error) {
-      setError(`Submission failed. ${(error as Error).message}`);
+      setError(`${(error as Error).message}`);
       setSubmitting(false)
+      setLoading(false)
     }
   }
   };
 
-    // File upload trigger handling
-    useEffect(() => {
-      const fileUploadTrigger = document.getElementById("file-upload-trigger");
-      const fileUploadInput = document.getElementById("file-upload") as HTMLInputElement;
-      const fileNameDisplay = document.getElementById("file-name");
-  
-      fileUploadTrigger?.addEventListener("click", () => {
-        fileUploadInput?.click();
-      });
-  
-      fileUploadInput?.addEventListener("change", (event) => {
-        if (event.target instanceof HTMLInputElement && event.target.files?.[0]) {
-          const file = event.target.files[0];
-          setFile(file);
-  
-          if (fileNameDisplay) {
-            fileNameDisplay.textContent = file.name;
-          }
-        }
-      });
-    }, []);
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+         const fileNameDisplay = document.getElementById("file-name");
+         const file = e.target.files?.[0];
+         if (file) {
+           setFormData((prev) => ({ ...prev, logo: file }));
+           setFile(file);
+           if (fileNameDisplay) {
+             fileNameDisplay.textContent = file.name;
+           }
+         }
+       };
     
   return (
     <div className="fixed flex justify-center items-center bg-slate-400 w-full h-full top-0 left-0 z-30 backdrop-blur-sm bg-opacity-40 overflow-hidden overflow-y-visible">
+      {error && <AlertNotification message={error} type="error" />}
+      {success && <AlertNotification message={success} type="success" />}
+     
       <i
         onClick={onClose}
         className="bi bi-x absolute right-4 px-[6px] py-[2px] border top-7 text-2xl font-bold cursor-pointer text-teal-50 bg-teal-500 border-teal-300 hover:bg-teal-200 hover:border rounded-full"
@@ -225,17 +234,9 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
      
 
       
-      <div className="w-3/5 bg-white rounded-lg px-5 py-3">
+      <div className="w-3/5 bg-white rounded-lg px-5 py-3 navbar max-h-[96vh] overflow-hidden overflow-y-visible">
         <h4 className="text-center text-2xl mb-5 font-semibold text-teal-600">Upload Research Material </h4>
-        <form className="space-y-6 px-8" onSubmit={handleSubmit}>
-        {success || error && (
-          <div
-          className={`${success ? 'bg-green-100 text-green-500 border-green-300' : 'bg-red-100 text-red-500 border-red-300'} p-4 rounded-md`}
-          >
-            {success ? "Successfully added" : error ? error : ""}
-          </div>
-        )}
-         {loading && (<DivPreloader />) }
+        <form className="space-y-4 px-8" onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
             {[
               { id: "title", label: "Title", type: "text" },
@@ -266,6 +267,7 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </div>
             ))}
           </div>
+          <div className="grid grid-cols-2 gap-4">
           <div className="relative">
               <label
                 htmlFor="category"
@@ -319,64 +321,55 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <option value="pending">Pending</option>
               </select>
             </div>
-
-
-          {/* File input and file name display */}
-          <div className="relative">
-            {/* File input and file name display */}
-            <label
-                htmlFor="file-upload"
-                className={`absolute left-3 text-gray-500 transition-all duration-300 ${
-                  focus["file-upload"]
-                    ? "top-[-10px] text-sm bg-white px-1"
-                    : "top-2 text-base"
-                }`}
-              >
-               Upload document<span className="text-red-500"> *</span>
-            </label>
-          <input
-            type="file"
-            id="file-upload"
-            style={{ display: "none" }}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-400 focus:outline-none transition-colors"
-            onFocus={() => handleFocus("file_upload")}
-            onBlur={(e) => handleBlur("file-upload", e.target.value)}
-          />
-          <button  type="button" id="file-upload-trigger" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-400 focus:outline-none transition-colors"
-          >
-            <span id="file-name" className="bi bi-upload text-sm text-gray-500"></span>
-          </button>
-           
           </div>
          
           <div className="grid grid-cols-2 gap-4">
 
-           <div className="relative">
-              <label
-                htmlFor="school"
-                className={`absolute left-3 text-gray-500 transition-all duration-300 ${
-                  focus["school"]
-                    ? "top-[-10px] text-sm bg-white px-1"
-                    : "top-2 text-base"
-                }`}
-              >
-                School<span className="text-red-500"> *</span>
-              </label>
-              <select
-                id="school"
-                className="w-full border rounded-md border-gray-300 px-3 py-2 bg-transparen2 focus:border-teal-500 focus:outline-none appearance-none transition-colors"
-                onFocus={() => handleFocus("school")}
-                onBlur={(e) => handleBlur("school", e.target.value)}
-                value={formData.school}
-                onChange={handleChange}
-                required
-              >
-                <option value=""></option>
-                {schools.map((school) => (
-                   <option key={school.id} value={school.id}>{school.name}</option>
-                ))}
-              </select>
-            </div>
+          {/* Department */}
+<div className="relative">
+  <label
+    htmlFor="department"
+    className={`absolute left-3 text-gray-500 transition-all duration-300 ${
+      focus["department"] ? "top-[-10px] text-sm bg-white px-1" : "top-2 text-base"
+    }`}
+  >
+    Department <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    id="department"
+    className="w-full border rounded-md border-gray-300 px-3 py-2 bg-transparent focus:border-teal-500 focus:outline-none"
+    onFocus={() => handleFocus("department")}
+    onBlur={(e) => handleBlur("department", e.target.value)}
+    value={""+searchTerm} // Display department name
+    onChange={(e) => setSearchTerm(e.target.value)}
+    required
+  />
+  {searchTerm && (
+    <div className="absolute w-full bg-white border border-gray-300 rounded-md mt-1 shadow-lg z-10">
+      <ul>
+        {departments
+          .filter((department) =>
+            `${department.name} ${department.school} ${department.institute}`
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          )
+          .map((department) => (
+            <li
+              key={department.id}
+              className={`${searchTerm === department.name ? 'hidden' : ''} px-3 py-2 hover:bg-gray-200 cursor-pointer`}
+              onClick={() => {
+                setSearchTerm(department.name); // Show department name in input
+                setFormData({ ...formData, department: department.id }); // Store department ID in formData
+              }}
+            >
+              {department.name} - {department.school} - {department.institute}
+            </li>
+          ))}
+      </ul>
+    </div>
+  )}
+</div>
 
             <div className="relative">
               <label
@@ -447,20 +440,53 @@ const AddResearch: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             }}
             
           ></div>
+         </div>
         </div>
-          
-          
+            {/* Row 3: Profile Picture Upload */}
+            <div className="relative mb-6">
+            <input
+              type="file"
+              id="profilePicture"
+              className="hidden"
+              accept=".pdf, .docx, .txt, .pptx, .xlsx"
+              onFocus={() => handleFocus("profilePicture")}
+              onBlur={(e) => handleBlur("profilePicture", e.target.value)}
+              onChange={handleFileChange}
+              required
+            />
+            <div className="mt-1 border border-gray-300 bg-gray-100 rounded-lg p-3 text-center flex flex-col justify-center">
+              <label
+                htmlFor="profilePicture"
+                className="py-2 px-12 border-2 text-teal-600 border-dashed rounded-md mx-auto w-min h-min text-center cursor-pointer border-teal-500"
+              >
+                <i className="bi bi-upload tex-xl"></i>
+              </label>
+              <label
+                htmlFor="profilePicture"
+                className="cursor-pointer text-lg text-teal-600 hover:text-teal-300"
+              >
+                Click file upload button to upload research document
+              </label>
+              <p className="text-xs text-gray-500 mt-1">
+                Support for a single file. Supported formats: .pdf, .docx, .txt, .pptx, .xlsx
+              </p>
+              <span id="file-name" className="text-base font-semibold py-2"></span>
+            </div>
           </div>
+           
+          
+         
            {/* Submit Button */}
-           <div className="text-center">
-            <button
+           <div className="text-center flex justify-center">
+             <button
               type="submit"
-              className="w-[120px]  border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
-            >
-              <span className="flex space-x-1 justify-center items-center">
-                {submitting && (<ButtonPreloader />)}
-              Add
-              </span>
+              disabled={loading}
+              className="w-[150px] flex items-center justify-center space-x-2 border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
+             >
+              {loading && (
+                <Preloader />
+              )}
+              Upload
               
             </button>
           </div>

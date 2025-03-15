@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import VerifyForm from "./forgot-password";
+import Preloader from "../app/buttonPreloader";
 
 
 interface FormData {
@@ -20,6 +21,8 @@ const LoginForm = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
   const router = useRouter();
 
   const handleFocus = (field: string) =>
@@ -37,7 +40,7 @@ const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setLoading(true);
     
   
     try {
@@ -51,8 +54,10 @@ const LoginForm = () => {
       });
     
       if (!response.ok) {
+        setLoading(false);
         const errorText = await response.json();
         throw new Error(`${errorText.message}`);
+        
       }
     
       const data = await response.json();
@@ -64,11 +69,13 @@ const LoginForm = () => {
         id: data.user.id,
         name: data.user.name,
         session_id: data.user.session_id,
-        profile: data.user.profile
+        profile: data.user.profile,
+        status: data.user.status,
     }));
-
+     setLoading(false);
     } catch (error: any) {
       setError(error.message);
+      setLoading(false);
     }
     
   };
@@ -138,11 +145,15 @@ const LoginForm = () => {
             ))}
           
              {/* Submit Button */}
-            <div className="text-center">
+             <div className="text-center flex justify-center">
              <button
               type="submit"
-              className="w-[150px] border border-teal-400 text-teal-600 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
+              disabled={loading}
+              className="w-[150px] flex items-center justify-center space-x-2 border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
              >
+              {loading && (
+                <Preloader />
+              )}
               Login
              </button>
             </div>
@@ -154,7 +165,7 @@ const LoginForm = () => {
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 border-t border-teal-300 mt-6 py-2">
 
-          © 2023 - 2024 Kamero Research Base
+          © 2023 - 2025 Kamero Research Base
         </p>
       </div>
     </div>

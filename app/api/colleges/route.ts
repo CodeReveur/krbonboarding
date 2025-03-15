@@ -13,7 +13,8 @@ export async function GET(req: Request) {
     const filter = searchParams.get("filter");
     const search = searchParams.get("search");
     const sort = searchParams.get("sort");
-    const session_id = searchParams.get("institution_id")
+    const session_id = searchParams.get("institution_id");
+    
     let query = `SELECT 
       c.id,
       c.name,

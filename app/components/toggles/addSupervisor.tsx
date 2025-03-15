@@ -1,11 +1,15 @@
 
   "use client";
 import React, { useEffect, useState } from "react";
+import Preloader from "../app/buttonPreloader";
+import AlertNotification from "../app/notify";
 
-interface schools {
+
+interface Departments {
   id: number;
   name: string;
   institute: string;
+  school: string;
 }
 
 interface FormData {
@@ -13,9 +17,7 @@ interface FormData {
   last_name: string;
   email: string;
   phone: string;
-  dob: string;
-  school: string;
-  profilePicture: File | null;
+  department: any;
 }
 
 const AddSupervisor: React.FC<{ onClose: () => void }> = ({ onClose }) => { 
@@ -26,34 +28,49 @@ const AddSupervisor: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     last_name: "",
     email: "",
     phone: "",
-    dob: "",
-    school: "",
-    profilePicture: null
+    department: ""
   });
-  const [schools, setschools] = useState<schools[]>([]);
-  const [file, setFile] = useState<File | null>(null);
+  
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [departments, setDepartments] = useState<Departments[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // Fetch schools
+  
+  // Fetch departments
   useEffect(() => {
-    const fetchschools = async () => {
+    const fetchDepartments = async () => {
+      setLoading(true);
       const userSession = JSON.parse(localStorage.getItem('institutionSession') || '{}');
       let id = "";
       if(userSession && userSession.id){
         id = userSession.id;
       }
       try {
-        const response = await fetch(`/api/schools?institution_id=${id}`);
-        if (!response.ok) throw new Error("Failed to fetch schools");
+        const response = await fetch(`/api/departments?institution_id=${id}`);
+        if (!response.ok) throw new Error("Failed to fetch.");
         const data = await response.json();
-        setschools(data);
+        setDepartments(data);
+        setLoading(false);
       } catch (error) {
-        setError("An error occurred while fetching schools.");
+        setLoading(false);
+        setError("An error occurred!.");
       }
     };
-    fetchschools();
+    fetchDepartments();
   }, []);
+
+     // Function to clear messages after a few seconds
+     useEffect(() => {
+      if (error || success) {
+        const timer = setTimeout(() => {
+          setError(null);
+          setSuccess(null);
+        }, 10000); // Hide after 4 seconds
+        return () => clearTimeout(timer);
+      }
+    }, [error, success]);
 
 
   const handleFocus = (field: string) =>
@@ -71,15 +88,13 @@ const AddSupervisor: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     const payload = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       if (value) payload.append(key, value as string);
     });
-    if (file) {
-      payload.append("profilePicture", file);
-    }
-
+  
     try {
       const response = await fetch("/api/add/supervisor", {
         method: "POST",
@@ -93,21 +108,24 @@ const AddSupervisor: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           last_name: "",
           email: "",
           phone: "",
-          dob: "",
-          school: "",
-          profilePicture: null
+          department: "",
         });
-        setFile(null);
+        setLoading(false);
+        setTimeout(() => {
+          onClose();
+        }, 3000);
       } else {
         const error = await response.text();
         setError(`Submission failed. ${error}`);
+        setLoading(false);
       }
     } catch (error) {
       setError(`Submission failed. ${(error as Error).message}`);
+      setLoading(false);
     }
   };
 
-    // File upload trigger handling
+    /*// File upload trigger handling
     useEffect(() => {
       const fileUploadTrigger = document.getElementById("file-upload-trigger");
       const fileUploadInput = document.getElementById("file-upload") as HTMLInputElement;
@@ -144,9 +162,12 @@ const AddSupervisor: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       setTimeout(() => {
         onClose
       }, 1000)
-    }
+    }*/
   return (
     <div className="fixed flex justify-center items-center bg-slate-400 w-full h-full top-0 left-0 z-30 backdrop-blur-sm bg-opacity-40">
+      {error && <AlertNotification message={error} type="error" />}
+      {success && <AlertNotification message={success} type="success" />}
+    
       <i
         onClick={onClose}
         className="bi bi-x absolute right-4 px-[6px] py-[2px] border top-7 text-2xl font-bold cursor-pointer text-teal-50 bg-teal-500 border-teal-300 hover:bg-teal-200 hover:border rounded-full"
@@ -155,13 +176,7 @@ const AddSupervisor: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         <h4 className="text-center text-3xl my-3 pb-5 font-semibold text-teal-500">Add Supervisor </h4>
         
         <form className="space-y-6 px-8" onSubmit={handleSubmit}>
-        {(success || error) && (
-          <div
-          className={`${success?.includes('success') ? 'bg-green-100 text-green-500 border-green-300 ' : ' bg-red-100 text-red-500 border-red-300 '} font-semibold px-4 py-2 rounded-md`}
-          >
-            {success ? success : error ? error : ""}
-          </div>
-        )}
+       
           {/* Row 1: First and Last Name */}
           <div className="grid grid-cols-2 gap-4">
             {[
@@ -218,7 +233,7 @@ const AddSupervisor: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             />
           </div>
 
-           {/* Row 3: dob and Phone */}
+           {/* Row 3: department and Phone */}
            <div className="grid grid-cols-2 gap-4">
             <div className="relative">
               <label
@@ -243,96 +258,65 @@ const AddSupervisor: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               />
             </div>
 
-            <div className="relative">
-              <label
-                htmlFor="dob"
-                className={`absolute left-3 text-gray-500 transition-all duration-300 ${
-                  focus["dob"]
-                    ? "top-[-10px] text-sm bg-white px-1"
-                    : "top-2 text-base"
-                }`}
-              >
-                Date of Birth<span className="text-red-500"> *</span>
-              </label>
-              <input
-                id="dob"
-                type="date"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-400 focus:outline-none transition-colors"
-                onFocus={() => handleFocus("dob")}
-                onBlur={(e) => handleBlur("dob", e.target.value)}
-                value={formData.dob}
-                onChange={handleChange}
-                required
-              />
-            </div>
+               
+{/* Department */}
+<div className="relative">
+  <label
+    htmlFor="department"
+    className={`absolute left-3 text-gray-500 transition-all duration-300 ${
+      focus["department"] ? "top-[-10px] text-sm bg-white px-1" : "top-2 text-base"
+    }`}
+  >
+    Department <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    id="department"
+    className="w-full border rounded-md border-gray-300 px-3 py-2 bg-transparent focus:border-teal-500 focus:outline-none"
+    onFocus={() => handleFocus("department")}
+    onBlur={(e) => handleBlur("department", e.target.value)}
+    value={""+searchTerm} // Display department name
+    onChange={(e) => setSearchTerm(e.target.value)}
+    required
+  />
+  {searchTerm && (
+    <div className="absolute w-full bg-white border border-gray-300 rounded-md mt-1 shadow-lg z-10">
+      <ul>
+        {departments
+          .filter((department) =>
+            `${department.name} ${department.school} ${department.institute}`
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          )
+          .map((department) => (
+            <li
+              key={department.id}
+              className={`${searchTerm === department.name ? 'hidden' : ''} px-3 py-2 hover:bg-gray-200 cursor-pointer`}
+              onClick={() => {
+                setSearchTerm(department.name); // Show department name in input
+                setFormData({ ...formData, department: department.id }); // Store department ID in formData
+              }}
+            >
+              {department.name} - {department.school} - {department.institute}
+            </li>
+          ))}
+      </ul>
+    </div>
+  )}
+</div>
           </div>
 
-          {/** school */}
-          <div className="relative">
-              <label
-                htmlFor="school"
-                className={`absolute left-3 text-gray-500 transition-all duration-300 ${
-                  focus["school"]
-                    ? "top-[-10px] text-sm bg-white px-1"
-                    : "top-2 text-base"
-                }`}
-              >
-                School<span className="text-red-500"> *</span>
-              </label>
-              <select
-                id="school"
-                className="w-full border rounded-md border-gray-300 px-3 py-2 bg-transparen2 focus:border-teal-500 focus:outline-none appearance-none transition-colors"
-                onFocus={() => handleFocus("school")}
-                onBlur={(e) => handleBlur("school", e.target.value)}
-                value={formData.school}
-                onChange={handleChange}
-                required
-              >
-               <option value=""></option>
-               {schools.map((school) =>(
-                <option key={school.id} value={school.id}>{school.name +" - " +  school.institute}</option>
-               ))}
-              </select>
-            </div>
-
-             {/* Row 3: Profile Picture Upload */}
-          <div className="relative mb-6">
-            <input
-              type="file"
-              id="profilePicture"
-              className="hidden"
-              accept=".png, .jpg, .svg, .gif"
-              onFocus={() => handleFocus("profilePicture")}
-              onBlur={(e) => handleBlur("profilePicture", e.target.value)}
-              onChange={handleFileChange}
-              required
-            />
-            <div className="mt-1 border border-gray-300 bg-gray-100 rounded-lg py-2 text-center flex flex-col justify-center">
-              <label
-                htmlFor="profilePicture"
-                className="py-1 px-5 border text-gray-400 border-dashed rounded-md mx-auto w-min h-min text-center cursor-pointer border-teal-500"
-              >
-                <i className="bi bi-upload tex-xl"></i>
-              </label>
-              <label
-                htmlFor="profilePicture"
-                className="cursor-pointer text-teal-600 hover:text-teal-300"
-              >
-                Click here to upload profile picture
-              </label>
-              <p className="text-xs text-gray-500 mt-1">
-                Support for a single file. Supported formats: .png, .jpg, .svg, .gif
-              </p>
-              <span id="file-name" className="text-base font-semibold py-2"></span>
-            </div>
-          </div>
-           
+         
              {/* Submit Button */}
-            <div className="text-center">
+             <div className="text-center flex justify-center">
              <button
               type="submit"
-              className="w-[150px] border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
+              disabled={loading}
+              className="w-[150px] flex items-center justify-center space-x-2 border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
              >
+              {loading && (
+                <Preloader />
+              )}
               Add
              </button>
             </div>

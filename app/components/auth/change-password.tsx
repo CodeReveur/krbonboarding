@@ -3,6 +3,8 @@
 
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import Preloader from "../app/buttonPreloader";
+import { turborepoTraceAccess } from "next/dist/build/turborepo-access-trace";
 
 
 interface FormData {
@@ -23,6 +25,8 @@ const ChangePassword = ({hashed}: Props) => {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+   const [loading, setLoading] = useState(false);
+  
 
   const router = useRouter();
 
@@ -44,6 +48,7 @@ const ChangePassword = ({hashed}: Props) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true)
 
     const payload = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
@@ -72,13 +77,16 @@ const ChangePassword = ({hashed}: Props) => {
           hashed_id: "",
           confirm: "",
         });
+        setLoading(false)
        
       } else {
         const error = await response.text();
         setError(error);
+        setLoading(false)
       }
     } catch (error) {
       setError(`Changing password failed! ${(error as Error).message}`);
+      setLoading(false)
     }
   };
 
@@ -143,11 +151,15 @@ const ChangePassword = ({hashed}: Props) => {
             ))}
           
              {/* Submit Button */}
-            <div className="text-center">
+             <div className="text-center flex justify-center">
              <button
               type="submit"
-              className="w-[150px] border border-teal-400 text-teal-600 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
+              disabled={loading}
+              className="w-[150px] flex items-center justify-center space-x-2 border border-teal-400 text-teal-500 py-2 rounded-md hover:bg-teal-100 transition-all duration-300"
              >
+              {loading && (
+                <Preloader />
+              )}
               Change
              </button>
             </div>

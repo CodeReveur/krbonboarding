@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import client from "../../utils/db";
-const cloudinary = require('../../utils/cloudinary');
-const fs = require('fs');
-const path = require('path');
-const os = require('os'); // Import os to get the temporary directory
+import uploadDocumentToSupabase from "../../utils/supabase";
 
 // Define types for the school request
 type schoolRequest = {
@@ -14,22 +11,6 @@ type schoolRequest = {
   logo: File;
 };
 
-// Helper to upload logo to Cloudinary
-async function uploadLogoToCloudinary(file: File): Promise<string> {
-  const tempDir = os.tmpdir(); // Use OS temporary directory
-  const logoPath = path.join(tempDir, file.name); // Save the file with its original name
-  const buffer = await file.arrayBuffer(); // Get the file's buffer
-  fs.writeFileSync(logoPath, Buffer.from(buffer)); // Write the buffer to a file
-
-  // Upload the logo to Cloudinary
-  const uploadResult = await cloudinary.uploader.upload(logoPath, {
-    use_filename: true,
-    folder: 'institutions/schools/logos',
-  });
-  
-  fs.unlinkSync(logoPath); // Remove the temporary file after upload
-  return uploadResult.secure_url; // Return the uploaded logo's URL
-}
 
 // Helper function to hash the school ID
 async function hashId(id: number): Promise<string> {
@@ -60,7 +41,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   try {
     // Upload the logo to Cloudinary
-    const logo = await uploadLogoToCloudinary(schoolData.logo);
+    const logo = await uploadDocumentToSupabase(schoolData.logo, schoolData.name);
     const status = "Pending";
 
     // Insert school into the database

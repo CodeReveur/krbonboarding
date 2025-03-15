@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import client from "../../utils/db";
-const cloudinary = require('../../utils/cloudinary');
-const fs = require('fs');
-const path = require('path');
-const os = require('os'); // Import os to get the temporary directory
+import { getInstitutionPermissions } from "../../utils/permissions";
+import uploadDocumentToSupabase from "../../utils/supabase";
 
 // Define types for the Institution request
 type InstitutionRequest = {
@@ -12,33 +10,11 @@ type InstitutionRequest = {
   category: string;
   institution: string;
   status: string;
-  school: string;
+  department: string;
   year: string;
   abstract: string;
   document: File;
 };
-
-// Helper to upload document to Cloudinary
-async function uploadDocumentToCloudinary(file: File, title: string): Promise<string> {
-  const tempDir = os.tmpdir(); // Use OS temporary directory
-  const documentPath = path.join(tempDir, file.name); // Save the file with its original title
-  const buffer = await file.arrayBuffer(); // Get the file's buffer
-  fs.writeFileSync(documentPath, Buffer.from(buffer)); // Write the buffer to a file
-
-  // Convert title to a valid Cloudinary public_id format
-  const publicId = title.replace(/\s+/g, "_").toLowerCase();// Replace spaces with underscores
-
-  // Upload the document to Cloudinary
-  const uploadResult = await cloudinary.uploader.upload(documentPath, {
-    use_filename: true, // Use the specified public_id as the file name
-    folder: "institutions/researches/documents",
-    public_id: publicId, // Assign custom public_id
-    resource_type: "raw", // Ensure it's uploaded as a document, not an image
-  });
-
-  fs.unlinkSync(documentPath); // Remove the temporary file after upload
-  return uploadResult.secure_url; // Return the uploaded document's URL
-}
 
 // Helper function to hash the Institution ID
 async function hashId(id: number): Promise<string> {
@@ -58,29 +34,35 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     category: formData.get('category')?.toString() || '',
     institution: formData.get('institution')?.toString() || '',
     status: formData.get('status')?.toString() || '',
-    school: formData.get('school')?.toString() || '',
+    department: formData.get('department')?.toString() || '',
     year: formData.get('year')?.toString() || '',
     abstract: formData.get('abstract')?.toString() || '',
     document: formData.get('document') as File, // Get the document file directly
   };
 
   // Validate required fields
-  if (!researchData.title || !researchData.category || !researchData.researcher || !researchData.status || !researchData.school || !researchData.institution  || !researchData.year) {
+  if (!researchData.title || !researchData.category || !researchData.researcher || !researchData.status || !researchData.department || !researchData.institution  || !researchData.year) {
     return NextResponse.json({ error: "All fields are required" }, { status: 400 });
   }
+  const permit = await getInstitutionPermissions(researchData.institution);
+
+   if(!permit?.canAdd){
+    return NextResponse.json({ error: "You're not allowed to add'" }, { status: 403 });
+   }
 
   try {
+   
     // Upload the document to Cloudinary
-    const document = await uploadDocumentToCloudinary(researchData.document, researchData.title);
+    const document = await uploadDocumentToSupabase(researchData.document, researchData.title);
     const doc_type = researchData.document.type;
     const status = "Pending";
     const progress_status = researchData.status;
 
     // Insert researches into the database
     const result = await client.query(
-      `INSERT INTO researches (title, researcher, category, status, progress_status, document, year, school, institution, abstract, document_type, hashed_id, created_at, updated_at)
+      `INSERT INTO researches (title, researcher, category, status, progress_status, document, year, department, institution, abstract, document_type, hashed_id, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()) RETURNING *`,
-      [researchData.title, researchData.researcher, researchData.category, status, progress_status, document, researchData.year, researchData.school, researchData.institution, researchData.abstract, doc_type, hashId]
+      [researchData.title, researchData.researcher, researchData.category, status, progress_status, document, researchData.year, researchData.department, researchData.institution, researchData.abstract, doc_type, hashId]
     );
     const ResearchId = result.rows[0].id;
 
@@ -93,7 +75,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       [hashedResearchId, ResearchId]
     );
   
-    return NextResponse.json({ message: "Research added successfully", Research: result.rows[0] }, { status: 201 });
+    return NextResponse.json({ message: "Research added successfully", Research: result.rows[0] }, { status: 201 }); 
   } catch (error) {
     console.error("Error during Research addition:", error); // Log only the message
     return NextResponse.json(
@@ -101,5 +83,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { status: 500 }
     );
 }
-
 }
